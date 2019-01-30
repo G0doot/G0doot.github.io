@@ -18,7 +18,7 @@
     <meta name="description" content="">
     <meta name="author" content="Godot">
     <meta name="keywords" content="">
-    <title>New Blog New Begin ~ Godot</title>
+    <title>被SElinux坑的一点收获 ~ Godot</title>
     <link rel="stylesheet" href="/css/Material_Icons.css">
     <!-- <link rel="stylesheet" href="/css/font-awesome.css"> -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
@@ -84,8 +84,8 @@
   <div class="page-header header-filter" data-parallax="true" style="background-image: url('../../img/firewatcher2.jpg')">
     
       <div class="container">
-        <h1 class="title text-center">New Blog New Begin</h1>
-        <p class="text-center"><b>Tuesday, January 15th 2019, 4:38 pm</b></p>
+        <h1 class="title text-center">被SElinux坑的一点收获</h1>
+        <p class="text-center"><b>Monday, January 30th 2017, 5:48 pm</b></p>
       </div>
     
   </div>
@@ -100,15 +100,52 @@
 <div class="row">
     <div class="col-md-7 offset-md-2">
         <div class="post_content tocbot-content">
-            <h2 id="新的博客-新的开始"><a href="#新的博客-新的开始" class="headerlink" title="新的博客 新的开始"></a>新的博客 新的开始</h2><p>经过了一场惨绝人寰数据丢失事件之后，之前的18篇博客所剩无几，现将博客移植到这里，也终于从typecho换成了hexo。用了两年的博客突然没了，还是挺难受的，感觉就像之前的足迹突然不见了一样，不过有幸在兔子师傅的帮助下从Google缓存里抢救了几篇出来。<a id="more"></a>这些文章我会整理一下发出来，按照记忆尝试着设置一下时间轴，在“Hello World”以前就是抢救出来的文章了。</p>
-<p>8102年发生了许多事情，有幸在长亭实习，学到了很多，认识了很多有趣的师傅。这一年自己的心态也发生了很大的变化，遇到了意想不到的惊喜，有了更清晰的目标与未来。</p>
+            <h1 id="被SElinux坑的一点收获"><a href="#被SElinux坑的一点收获" class="headerlink" title="被SElinux坑的一点收获"></a>被SElinux坑的一点收获</h1><h2 id="坑点"><a href="#坑点" class="headerlink" title="坑点"></a>坑点</h2><p>之前在实验文件守护脚本的时候，用的阿里云Centos镜像装了虚拟机。后来发现CMS一直装不上去，每次在验证权限的时候都一直显示没有写入权限，在用Chmod修改权限以及更改了用户组之后依然显示没有写入权限。后来我直接改掉了CMS的安装代码饶过权限检测，发现文件确实是写不进去的。</p>
+<p>后来在论坛中找到一条命令：</p>
+<p><code>chcon -R -t httpd_sys_rw_content_t 路径</code></p>
+<p>发现写进去之后确实好使，有了写入权限。当时因为急着测试脚本，就没有深究为什么。后来打比赛的时候，@hebic又被坑了一次，vsftp一直弄不好，最近参看关于SElinux的时候才知道和vsftp也有些冲突。所以来了解一下。</p>
+<h2 id="SElinux"><a href="#SElinux" class="headerlink" title="SElinux"></a>SElinux</h2><p>SElinux是一个基于域-类型模型（domain-type）的强制访问控制（MAC）安全系统，总之就是一个访问控制体系，集成在了Linux的系统内核中。</p>
+<p>SELinux对系统用户(system users)是透明的，只有系统管理员才能在系统中对策略进行修改，有着比较高的安全性，但是因为与很多常用软件有冲突，如vsftp、LAMP等，所以为了避免踩坑，很多人喜欢关掉它。</p>
+<p>关掉方法：</p>
+<ol>
+<li>修改/etc/selinux/config文件中设置SELINUX=disabled ，然后重启。</li>
+<li><code>setenforce 0</code>临时关闭。</li>
+</ol>
+<h3 id="chcon"><a href="#chcon" class="headerlink" title="chcon"></a>chcon</h3><p>chcon命令是用来修改文件的安全上下文的，比如：用户、角色、类型、安全级别。</p>
+<pre><code>chcon [选项]... 环境 文件... 
+chcon [选项]... [-u 用户] [-r 角色] [-l 范围] [-t 类型] 文件... 
+chcon [选项]... --reference=参考文件 文件...
+
+-h, --no-dereference：影响符号连接而非引用的文件。 
+    --reference=参考文件：使用指定参考文件的安全环境，而非指定值。 
+-R, --recursive：递归处理所有的文件及子目录。 
+-v, --verbose：为处理的所有文件显示诊断信息。 
+-u, --user=用户：设置指定用户的目标安全环境。 
+-r, --role=角色：设置指定角色的目标安全环境。 
+-t, --type=类型：设置指定类型的目标安全环境。 
+-l, --range=范围：设置指定范围的目标安全环境。
+
+</code></pre><p>一个文件在创建的时候会带上当前目录的安全上下文，所以在根目录的创建的文件放到Web目录是没办法从外网访问的（真坑。。。）</p>
+<p>查看文件夹下文件的安全上下文的命令：</p>
+<p><code>ls -Z</code></p>
+<h3 id="一点小实验"><a href="#一点小实验" class="headerlink" title="一点小实验"></a>一点小实验</h3><p>由于如何具体设置各个用户的安全上下文现在还不太懂，所以偷懒直接在根目录建了个test.txt，放到Web目录下，从图片可以看到安全上下文的区别.</p>
+<p><img src="/2017/selinux/1.png" alt="1"></p>
+<p>用<code>ls -l</code>这些文件基本看不出什么区别.</p>
+<p><img src="/2017/selinux/2.png" alt="2"></p>
+<p>测试的时候写了一个远程命令执行的漏洞：</p>
+<pre><code>&lt;?php
+    $a = $_POST[&#39;cmd&#39;];
+    system($a)
+?&gt;
+</code></pre><p>然后测试，直接访问test.txt会显示Forbidden，用远程命令执行无论是直接<code>cat</code> 还是带外信道的方法都会返回空。修改403 Forbidden之后，部署了这个防御的情况下攻击者甚至无法判断这个文件是否真的是空(真能坑人)。</p>
+<p>最后说一下，如果真的有命令执行的话，以Web用户执行<code>ls -Z</code>是可以看到用户安全上下文的，但是只能看到有权限查看的文件的安全上下文（和<code>ls -l</code>的回显同理）。</p>
 
         </div>
         <br><br>
         <div>
             <p>
                      
-                    <span class="badge badge-default">#&nbsp;随笔</span>
+                    <span class="badge badge-default">#&nbsp;Linux</span>
                     &nbsp;
                     
             </p>
@@ -118,7 +155,7 @@
     
         <div class="col-md-3">
             <i class="material-icons" style="vertical-align:middle">toc</i>Toc:
-            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#新的博客-新的开始"><span class="toc-text">新的博客 新的开始</span></a></li></ol>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#被SElinux坑的一点收获"><span class="toc-text">被SElinux坑的一点收获</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#坑点"><span class="toc-text">坑点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SElinux"><span class="toc-text">SElinux</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chcon"><span class="toc-text">chcon</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一点小实验"><span class="toc-text">一点小实验</span></a></li></ol></li></ol></li></ol>
         </div>
     
 </div>
@@ -133,8 +170,8 @@
     <script>               
         var disqus_shortname = '';
         var disqus_config = function () {
-            this.page.url = 'http://yoursite.com/2019/New-Blog/'; 
-            this.page.identifier = '/2019/New-Blog/';
+            this.page.url = 'http://yoursite.com/2017/selinux/'; 
+            this.page.identifier = '/2017/selinux/';
         };
         (function() { 
             var d = document, s = d.createElement('script');

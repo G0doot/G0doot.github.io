@@ -17,6 +17,9 @@
 .post-card {
   margin-top: 2rem;
 }
+.post-card i {
+  vertical-align: middle;
+}
 .card-img {
   display: inline-block;
   max-width: 100%;
@@ -15746,7 +15749,6 @@ footer .pull-center {
     width: 245px;
   }
 }
-/*# sourceMappingURL=kit-free.css.map */
 @-moz-keyframes progress-bar-stripes {
   from {
     background-position: 1rem 0;

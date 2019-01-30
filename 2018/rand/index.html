@@ -18,7 +18,7 @@
     <meta name="description" content="">
     <meta name="author" content="Godot">
     <meta name="keywords" content="">
-    <title>New Blog New Begin ~ Godot</title>
+    <title>php rand相关 ~ Godot</title>
     <link rel="stylesheet" href="/css/Material_Icons.css">
     <!-- <link rel="stylesheet" href="/css/font-awesome.css"> -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
@@ -84,8 +84,8 @@
   <div class="page-header header-filter" data-parallax="true" style="background-image: url('../../img/firewatcher2.jpg')">
     
       <div class="container">
-        <h1 class="title text-center">New Blog New Begin</h1>
-        <p class="text-center"><b>Tuesday, January 15th 2019, 4:38 pm</b></p>
+        <h1 class="title text-center">php rand相关</h1>
+        <p class="text-center"><b>Tuesday, January 30th 2018, 5:33 pm</b></p>
       </div>
     
   </div>
@@ -100,15 +100,105 @@
 <div class="row">
     <div class="col-md-7 offset-md-2">
         <div class="post_content tocbot-content">
-            <h2 id="新的博客-新的开始"><a href="#新的博客-新的开始" class="headerlink" title="新的博客 新的开始"></a>新的博客 新的开始</h2><p>经过了一场惨绝人寰数据丢失事件之后，之前的18篇博客所剩无几，现将博客移植到这里，也终于从typecho换成了hexo。用了两年的博客突然没了，还是挺难受的，感觉就像之前的足迹突然不见了一样，不过有幸在兔子师傅的帮助下从Google缓存里抢救了几篇出来。<a id="more"></a>这些文章我会整理一下发出来，按照记忆尝试着设置一下时间轴，在“Hello World”以前就是抢救出来的文章了。</p>
-<p>8102年发生了许多事情，有幸在长亭实习，学到了很多，认识了很多有趣的师傅。这一年自己的心态也发生了很大的变化，遇到了意想不到的惊喜，有了更清晰的目标与未来。</p>
+            <h1 id="php-rand相关"><a href="#php-rand相关" class="headerlink" title="php rand相关"></a>php rand相关</h1><p>这篇文章更多的是记录的性质，毕竟关于php的随机数的文章已经很多了，每次比赛都现去查，去了解，搞得效率很低，所以这次记录到这里，以后遇到相关的题目直接使用就可以了。<a id="more"></a>，毕竟php随机数相关的函数都是使用php_rand()生成的，只需判断php_rand()就可以判断相关函数了，通用性还是很强的。</p>
+<p>首先看到英文版的php手册里大大的警告：<br><img src="http://107.182.176.9/img/php_rand.png" alt="php_rand"></p>
+<p>这个警告很久很久很久很久之前就已经放到了英文网页上了，现在还没有被翻译。。。也是很醉了</p>
+<h2 id="随机数预测"><a href="#随机数预测" class="headerlink" title="随机数预测"></a>随机数预测</h2><p>首先，php的rand函数使用的是libc的随机数发生器，也就是C语言中的rand函数，使用方法如下：</p>
+<pre><code>#include&lt;stdlib.h&gt;
+#include&lt;stdio.h&gt;
+
+int main(){
+    srand(1234567890);
+    printf(&quot;%d&quot;,rand());
+}
+
+$ gcc rand.c
+$ ./a.out
+1727406014
+$ php -r &quot;srand(1234567890); echo rand();&quot;
+1727406014
+
+</code></pre><p>可以看到，种子一样，生成的随机数完全一样，也就是说，我们只需要获取了使用rand函数时的播种，就可以判断它生成的随机数了。</p>
+<p>不过从php4.2开始，rand函数就是随机播种的了，不需要再用srand()或mt_srand()给随机数发生器播种。</p>
+<p>所以就要使用另一种预测方法，也就是libc的rand函数中本身的缺陷导致的可以预测：</p>
+<p>rand[i] = (rand[i-3] + rand[i-31]) % RAND_MAX</p>
+<p>这里的RAND_MAX是指生成的随机数的最大值，就是rand()函数中的参数，如果没有规定最大值，那么在Linux下就是2147483647，在Windows下就是32767</p>
+<p>需要注意的是，这里生成的数中，大概%50的概率和实际情况差1。</p>
+<h2 id="其衍生函数的预测"><a href="#其衍生函数的预测" class="headerlink" title="其衍生函数的预测"></a>其衍生函数的预测</h2><p>这里要举的例子是php_string_shuffle()这个函数。</p>
+<p>这里说一下php函数与其源码中的函数的命名方法，比如string_shuffle()函数，在php的源码中定义是static void php_string_shuffle(char *str, long len TSRMLS_DC)，会加上一个php_的前缀。<br>那么我们来看php_string_shuffle()的定义：</p>
+<pre><code>demo：
+&lt;?php
+$str = &#39;abcdef&#39;;
+$shuffled = str_shuffle($str);
+
+// 输出类似于: bfdaec
+echo $shuffled;
+?&gt;
+
+源码：
+static void php_string_shuffle(char *str, long len TSRMLS_DC) /* {{{ */
+{
+    long n_elems, rnd_idx, n_left;
+    char temp;
+    /* The implementation is stolen from array_data_shuffle       */
+    /* Thus the characteristics of the randomization are the same */
+    n_elems = len;
+
+    if (n_elems &lt;= 1) {
+        return;
+    }
+
+    n_left = n_elems;
+
+    while (--n_left) {
+        rnd_idx = php_rand(TSRMLS_C);
+        RAND_RANGE(rnd_idx, 0, n_left, PHP_RAND_MAX);
+        if (rnd_idx != n_left) {
+            temp = str[n_left];
+            str[n_left] = str[rnd_idx];
+            str[rnd_idx] = temp;
+        }
+    }
+}
+</code></pre><p>可以看到，在倒数第9行：</p>
+<p>rnd_idx = php_rand(TSRMLS_C);</p>
+<p>我们之前说的源码中的源码的命名就可以知道，这里php的C语言源码中的php_rand()函数其实就是我们在php中调用的rand()函数。</p>
+<p>同理，rand()函数可以预测，那么string_shuffle()这个函数就可以预测。</p>
+<p>转化为python代码如下：</p>
+<pre><code>def rand_range(n,min,max,RAND_MAX):
+    value=min+((max-min+1.0)*(n/(RAND_MAX+1.0)))
+    return value
+
+
+/*
+ori_str为string_shuffle()函数的参数，rand_num是一个有着ori_str的长度个连续的预测出的rand()产生的随机数的数组(也就是说用32个连续的rand()预测出ori_str的长度个随机数，然后存成rand_num数组)
+*/
+def get_rand_str(ori_str,rand_num):
+    RAND_MAX = 2147483647
+    rand_str=ori_str
+    i=len(ori_str)
+    while i&gt;1:
+        i-=1
+        rnd_idx=int(rand_range(rand_num[len(ori_str)-1-i],0,i,RAND_MAX))
+        #print(len(ori_str)-1-i,rand_num[len(ori_str)-1-i],rnd_idx)
+        if rnd_idx != i:
+            temp = rand_str[i]
+            rand_str= rand_str[:i]+rand_str[rnd_idx]+rand_str[i+1:]
+            rand_str=rand_str[:rnd_idx]+temp+rand_str[rnd_idx+1:]
+
+
+    return rand_str
+
+</code></pre><p>有的读者可能有些疑问了，之前不是说%50的几率和实际情况差1嘛，php_string_shuffle()函数根据传入的参数多次调用了php_rand()，怎么保证一次都不出错呢？</p>
+<p>这里最主要就是RAND_RANGE()函数了，在python脚本中这里我把它改写成了rand_range()，这个函数中，会用生成的随机数除以RAND_MAX，由于这里的RAND_MAX非常大，是Linux下默认的2147483647，那么之前生成的时候的1的误差基本就没有了。</p>
+<p>PS：php 7.1.0版本之后str_shuffle中内置的随机算法从 libc rand 函数改成了梅森旋转演伪随机数发生算法，本文方法不再适用.</p>
 
         </div>
         <br><br>
         <div>
             <p>
                      
-                    <span class="badge badge-default">#&nbsp;随笔</span>
+                    <span class="badge badge-default">#&nbsp;ctf</span>
                     &nbsp;
                     
             </p>
@@ -118,7 +208,7 @@
     
         <div class="col-md-3">
             <i class="material-icons" style="vertical-align:middle">toc</i>Toc:
-            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#新的博客-新的开始"><span class="toc-text">新的博客 新的开始</span></a></li></ol>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#php-rand相关"><span class="toc-text">php rand相关</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#随机数预测"><span class="toc-text">随机数预测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其衍生函数的预测"><span class="toc-text">其衍生函数的预测</span></a></li></ol></li></ol>
         </div>
     
 </div>
@@ -133,8 +223,8 @@
     <script>               
         var disqus_shortname = '';
         var disqus_config = function () {
-            this.page.url = 'http://yoursite.com/2019/New-Blog/'; 
-            this.page.identifier = '/2019/New-Blog/';
+            this.page.url = 'http://yoursite.com/2018/rand/'; 
+            this.page.identifier = '/2018/rand/';
         };
         (function() { 
             var d = document, s = d.createElement('script');

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+
+
+
+
+
+
+
+
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+    <link rel="apple-touch-icon" sizes="76x76" href="../img/favicon.png">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="description" content="">
+    <meta name="author" content="Godot">
+    <meta name="keywords" content="">
+    <title>GraphQl Injection ~ Godot</title>
+    <link rel="stylesheet" href="/css/Material_Icons.css">
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
+        <link rel="stylesheet" href="/css/post.css">
+        
+            <link rel="stylesheet" href="/css/Prettify/tomorrow-night-eighties.min.css">
+        
+    
+</head>
+
+<body class=" sidebar-collapse">
+<nav class="navbar navbar-transparent navbar-color-on-scroll fixed-top navbar-expand-lg" color-on-scroll="100" id="sectionsNav">
+    <div class="container">
+        <div class="navbar-translate">
+            <a class="navbar-brand" href="/">
+                Godot</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="navbar-toggler-icon"></span>
+                <span class="navbar-toggler-icon"></span>
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ml-auto">
+                    
+                        
+                            <li class="nav-item">
+                                <a class="nav-link" href="/archives/">
+                                    archives
+                                </a>
+                            </li>
+                        
+                            <li class="nav-item">
+                                <a class="nav-link" href="/about/">
+                                    about
+                                </a>
+                            </li>
+                        
+                    
+                    
+                        
+                            <li class="nav-item">
+                                <a class="nav-link" rel="tooltip" title="" data-placement="bottom" href="" target="_blank" data-original-title="See me here">
+                                    <i class="fa fa-github"></i>
+                                </a>
+                            </li>
+                        
+                            <li class="nav-item">
+                                <a class="nav-link" rel="tooltip" title="" data-placement="bottom" href="" target="_blank" data-original-title="See me here">
+                                    <i class="fa fa-twitter"></i>
+                                </a>
+                            </li>
+                        
+                    
+                </ul>
+            </div>
+    </div>
+</nav>
+    
+  <div class="page-header header-filter" data-parallax="true" style="background-image: url('../../img/firewatcher2.jpg')">
+    
+      <div class="container">
+        <h1 class="title text-center">GraphQl Injection</h1>
+        <p class="text-center"><b>Wednesday, August 30th 2017, 5:22 pm</b></p>
+      </div>
+    
+  </div>
+
+
+  <div class="main main-raised">
+    <div class="container">
+      <div class="section">
+        
+
+
+<div class="row">
+    <div class="col-md-7 offset-md-2">
+        <div class="post_content tocbot-content">
+            <h1 id="GraphQl-Injection"><a href="#GraphQl-Injection" class="headerlink" title="GraphQl Injection"></a>GraphQl Injection</h1><p>前段时间试着打了几场ctftime上的比赛，遇到了很多以前没有看到过的东西，其中刚拿到最蒙逼的就是graphql。比赛出现的频次还挺高，所以研究研究记录一下。</p>
+<p>涉及到的题目有：HITB CTF 2017-Blog   SEC-T 2017-Dark Market</p>
+<a id="more"></a>
+<h2 id="GraphQl是什么？"><a href="#GraphQl是什么？" class="headerlink" title="GraphQl是什么？"></a>GraphQl是什么？</h2><p>GraphQL 可以看做一条以通用基础业务数据模型为基础、将后端服务和前端页面联系在一起的东西。其实就是放在页面数据和服务端中间做数据处理的东西。</p>
+<p><a href=""></a></p>
+<p>GraphQl能实现的最重要的功能，就是在一个数据接口，执行不同的查询，返回不同的数据，比如以下例子：</p>
+<p>a 查询对应的响应：</p>
+<pre><code>{
+  &quot;user&quot; : {
+    &quot;id&quot;: 3500401,
+    &quot;name&quot;: &quot;Jing Chen&quot;,
+    &quot;isViewerFriend&quot;: true
+  }
+}
+</code></pre><p>b 查询对应的响应：</p>
+<pre><code>{
+  &quot;user&quot; : {
+    &quot;name&quot;: &quot;Jing Chen&quot;,
+    &quot;profilePicture&quot;: {
+      &quot;uri&quot;: &quot;http: //someurl.cdn/pic.jpg&quot;,、
+      &quot;width&quot;: 50,
+      &quot;height&quot;: 50
+    }
+  }
+}
+</code></pre><p>这两个查询是传入同一个数据接口的，只需要改变查询内容，前端就能定制服务器返回的响应内容，这就是 GraphQL 的客户端指定查询（Client Specified Queries）。</p>
+<h2 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h2><p>在这里可以学习GraphQl的具体操作：</p>
+<p><a href="https://github.com/zhouyuexie/learn-graphql" target="_blank" rel="noopener">learn-GraphQl</a></p>
+<h2 id="题目中的操作"><a href="#题目中的操作" class="headerlink" title="题目中的操作"></a>题目中的操作</h2><h3 id="HITB-CTF-2017-Blog"><a href="#HITB-CTF-2017-Blog" class="headerlink" title="HITB CTF 2017-Blog"></a>HITB CTF 2017-Blog</h3><p>这道题在查询时可以看到这个传参<code>query={  itemsForAuthor(id:&quot;aYT0x&quot;) { id title } }</code></p>
+<p>其实就是</p>
+<pre><code>query=
+{
+    itemsForAuthor(id:&quot;aYT0x&quot;) {
+        id
+        title
+    } 
+}
+</code></pre><p>这里的”aYT0x”其中的”YT0x”base64一下就是a=1,因此构建一个原来一个不存在的id，比如<code>query={  itemsForAuthor(id:&quot;aYT0xaaaa&quot;) { id title } }</code>就会产生报错</p>
+<pre><code>{&quot;errors&quot;:[{&quot;message&quot;:&quot;(sqlite3.ProgrammingError) You must not use 8-bit bytestrings unless you use a text_factory that can interpret 8-bit bytestrings (like text_factory = str). It is highly recommended that you instead just switch your application to Unicode strings. [SQL: u&#39;SELECT author.id AS author_id, author.name AS author_name \\nFROM author \\nWHERE author.id = ?&#39;] [parameters: (&#39;1i\\xa6\\x9a&#39;,)]&quot;,&quot;locations&quot;:[{&quot;column&quot;:4,&quot;line&quot;:1}]}],&quot;data&quot;:{&quot;itemsForAuthor&quot;:null}}
+</code></pre><p>报错发现是sqLite数据库，在base64编码一下，就可以愉快的进行注入了。</p>
+<h3 id="SEC-T-2017-Dark-Market"><a href="#SEC-T-2017-Dark-Market" class="headerlink" title="SEC-T 2017-Dark Market"></a>SEC-T 2017-Dark Market</h3><p>个人感觉这道题对GraqhQl的考察要透彻一点，毕竟上道题没有表现出客户端指定查询（Client Specified Queries），其实还是一个用了GraphQl的普通注入题，后面这道感觉思路要更厉害一点。(导致即使查询可控变多了，虽然对GraphQl有一点了解，但是仍然没有做出来😂😂😂)</p>
+<p>这道题是一道商店的题，开头有100块，但是要买110块的东西。一般拿到这种买东西的题，一般就是条件竞争、注入得高级账号、进制转换等方法。</p>
+<p>但是做这道题的时候蒙逼了，只有一个没有注入漏洞的登录页面、一个买东西的页面、一个可以根据订货码来查询所定货物的页面，其中最后一个页面用了GraphyQl。这道题里面根本没有可以加钱的功能，也没有拿到高级账号的办法。</p>
+<p>唯一突破口是在查询订货码的地方，可以自定义查询，可以查询订货码、id、商品描述等商品信息，各种猜解发现查询不出什么敏感信息，后来只有放弃。</p>
+<p>后来看到一个老外的writeup，简直666.</p>
+<p><a href="https://github.com/reznok/CTFWriteUps/tree/master/SEC-T_2017/DarkMarket" target="_blank" rel="noopener">大佬的writeup</a></p>
+<p>这里对里面的一些东西讲解一下。</p>
+<p>首先这道题是可以客户端指定查询的，但是我不知道有什么查询姿势，大佬用了一个很厉害的payload：</p>
+<p><a href="https://gist.github.com/craigbeck/b90915d49fda19d5b2b17ead14dcd6da" target="_blank" rel="noopener">payload</a></p>
+<p>这个payload不是专门对于题目环境弄的，而是可以在各个GraphQl环境中使用，(比如上面那个GraphQl教程的环境)，把各个query、mutation、subscription查询出来。</p>
+<p>writeup中查询出的<a href="https://github.com/reznok/CTFWriteUps/blob/master/SEC-T_2017/DarkMarket/database_schema.json" target="_blank" rel="noopener">database_schema.json</a></p>
+<p>在这个database_schema.json中，可以看到根据订单号和userid删除订单，退回花的钱到现有账户，这样再注册一个账户进行之前账户的退款操作，这样总钱数就可以大于110，买到flag了。</p>
+<p>那么如何从database_schema.json中找到自己想要的query和mutation呢，请看下面。</p>
+<h2 id="database-schema-json剖析"><a href="#database-schema-json剖析" class="headerlink" title="database_schema.json剖析"></a>database_schema.json剖析</h2><p>首先拿到1540行的东西肯定是蒙蔽的，我们先从头看起。</p>
+<p>首先我们知道，在GraphQl中定义操作，有query、mutation等，这些在文件最前面有定义：</p>
+<pre><code>{
+  &quot;data&quot;: {
+    &quot;__schema&quot;: {
+      &quot;queryType&quot;: {
+        &quot;name&quot;: &quot;Query&quot;
+      },
+      &quot;mutationType&quot;: {
+        &quot;name&quot;: &quot;MyMutations&quot;
+      },
+</code></pre><p>这里规定了queryType和mutationType的name，全局搜索这个name搜索，既可看到Query的定义。</p>
+<p>这个文件中，就在这一段的下面就是对Query的定义：</p>
+<pre><code>&quot;types&quot;: [
+        {
+          &quot;kind&quot;: &quot;OBJECT&quot;,
+          &quot;name&quot;: &quot;Query&quot;,
+          &quot;description&quot;: null,
+          &quot;fields&quot;: [
+              .....
+              ]
+          }
+         ]
+</code></pre><p>在fields中就是查询方法，findProduct和findOrder。</p>
+<p>这里拿findProduct来讲一下：</p>
+<pre><code>            {
+              &quot;name&quot;: &quot;findProduct&quot;,
+              &quot;description&quot;: null,
+              &quot;args&quot;: [
+                {
+                  &quot;name&quot;: &quot;productId&quot;,
+                  &quot;description&quot;: null,
+                  &quot;type&quot;: {
+                    &quot;kind&quot;: &quot;SCALAR&quot;,
+                    &quot;name&quot;: &quot;Int&quot;,
+                    &quot;ofType&quot;: null
+                  },
+                  &quot;defaultValue&quot;: null
+                }
+              ],
+              &quot;type&quot;: {
+                &quot;kind&quot;: &quot;OBJECT&quot;,
+                &quot;name&quot;: &quot;Products&quot;,
+                &quot;ofType&quot;: null
+              },
+              &quot;isDeprecated&quot;: false,
+              &quot;deprecationReason&quot;: null
+            },
+</code></pre><p>这里除了可以看出是通过参数productId查询之外，主要是在type中：</p>
+<pre><code>            &quot;type&quot;: {
+                &quot;kind&quot;: &quot;OBJECT&quot;,
+                &quot;name&quot;: &quot;Products&quot;,
+                &quot;ofType&quot;: null
+              },
+</code></pre><p>这里的<code>&quot;name&quot;: &quot;Products&quot;</code>规定了可以查询出来的东西，全局搜索Products可以找到：</p>
+<pre><code>        {
+          &quot;kind&quot;: &quot;OBJECT&quot;,
+          &quot;name&quot;: &quot;Products&quot;,
+          &quot;description&quot;: null,
+          &quot;fields&quot;: [
+          .....
+          ]
+        }
+</code></pre><p>这部分在69行到149行， <code>&quot;fields&quot;:[.....]</code> 里面就是可以查询的参数信息，有id、name、desc、image、price。用同样的方法就可以看到在findOrder中可以查询id、productId、userId、orderId、user (223行到303行)。</p>
+<p>这里的user比较有用:</p>
+<pre><code>        {
+              &quot;name&quot;: &quot;user&quot;,
+              &quot;description&quot;: null,
+              &quot;args&quot;: [],
+              &quot;type&quot;: {
+                &quot;kind&quot;: &quot;OBJECT&quot;,
+                &quot;name&quot;: &quot;Users&quot;,
+                &quot;ofType&quot;: null
+              },
+              &quot;isDeprecated&quot;: false,
+              &quot;deprecationReason&quot;: null
+            }
+</code></pre><p>可以看到type里又有一个 <code>&quot;name&quot;: &quot;Users&quot;</code>,说明这里查询user之后里面可以嵌套一个子查询，子查询的定义可以通过寻找<code>&quot;name&quot;: &quot;Users&quot;</code>的查询方法找到。</p>
+<pre><code>        {
+          &quot;kind&quot;: &quot;OBJECT&quot;,
+          &quot;name&quot;: &quot;Users&quot;,
+          &quot;description&quot;: null,
+          &quot;fields&quot;: [
+          ....
+          ]
+        }
+</code></pre><p>这里fields里面定义了可以查询id、name等。所以可以这样定义payload：</p>
+<pre><code>query= {
+    findOrder (orderId: &quot;9fcdcedb-f15f-4759-b6d4-dfbe2419a0fc&quot;)
+    {
+        user
+        {
+            id
+            name
+        }
+    }
+}
+</code></pre><p>后面就查找一下<code>deleteOrder</code>这个Mutation，方法近似，简单很多。具体payload可以看上面大佬的的writeup链接，这里就不再赘述了。</p>
+
+        </div>
+        <br><br>
+        <div>
+            <p>
+                     
+                    <span class="badge badge-default">#&nbsp;ctf</span>
+                    &nbsp;
+                    
+            </p>
+        </div>
+    </div>
+    <!-- TOC -->
+    
+        <div class="col-md-3">
+            <i class="material-icons" style="vertical-align:middle">toc</i>Toc:
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#GraphQl-Injection"><span class="toc-text">GraphQl Injection</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GraphQl是什么？"><span class="toc-text">GraphQl是什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何使用"><span class="toc-text">如何使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#题目中的操作"><span class="toc-text">题目中的操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HITB-CTF-2017-Blog"><span class="toc-text">HITB CTF 2017-Blog</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SEC-T-2017-Dark-Market"><span class="toc-text">SEC-T 2017-Dark Market</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#database-schema-json剖析"><span class="toc-text">database_schema.json剖析</span></a></li></ol></li></ol>
+        </div>
+    
+</div>
+
+<!-- Comments -->
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+    
+        
+            <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    <script>               
+        var disqus_shortname = '';
+        var disqus_config = function () {
+            this.page.url = 'http://yoursite.com/2017/GraphQl/'; 
+            this.page.identifier = '/2017/GraphQl/';
+        };
+        (function() { 
+            var d = document, s = d.createElement('script');
+            s.type = 'text/javascript';
+            s.src = '//'+disqus_shortname+'.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>                                
+</div>
+        
+    
+    </div>
+</div>
+      </div>
+    </div>
+  </div>
+
+
+<footer class="footer footer-default">
+        <div class="container">
+          <div class="float-left" style="padding: 15px 0;">
+              萧索林叶花木，疾行不知倦碌
+          </div>
+          <div class="copyright float-right">
+            &copy;
+            <script>
+              document.write(new Date().getFullYear())
+            </script>&nbsp;<a href="https://hexo.io/zh-cn/" target="_blank">HEXO</a>&nbsp;<i class="material-icons">favorite_border</i>
+            <a href="https://github.com/invom/Material-T" target="_blank">Material-T</a>
+          </div>
+        </div>
+</footer>
+      <!--   Core JS Files   -->
+      <script src="/js/core/jquery.min.js"></script>
+      
+        <script src="/js/main.js"></script>
+       
+      <script src="/js/core/popper.min.js"></script>
+      <script src="/js/core/bootstrap-material-design.min.js"></script>
+      <script src="/js/plugins/moment.min.js"></script>
+      <!--	Plugin for the Datepicker, full documentation here: https://github.com/Eonasdan/bootstrap-datetimepicker -->
+      <!-- <script src="/js/plugins/bootstrap-datetimepicker.js"></script> -->
+      <!--  Plugin for the Sliders, full documentation here: http://refreshless.com/nouislider/ -->
+      <script src="/js/plugins/nouislider.min.js"></script>
+      <!-- Control Center for Material Kit: parallax effects, scripts for the example pages etc -->
+      <script src="/js/material-kit.min.js?v=2.0.5"></script>
+      
+      
+        <script src="/js/plugins/prettify.js"></script>
+        <script>
+            $(window).on('load',function(){
+                $('pre').addClass('prettyprint linenums');
+                prettyPrint();
+            })
+        </script>
+        
+          
+        
+      
+</body>
+</html>
